@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q3Antias - Quake 3 Servers</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            color: #00FFFF;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+        }
+        
+        .server-container {
+            border: 2px solid #008FFF;
+            background: #001122;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .server-header {
+            padding: 15px 20px;
+            border-bottom: 2px solid #008FFF;
+        }
+        
+        .server-header h2 {
+            color: #008FFF;
+            font-size: 28px;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+        
+        .server-address {
+            border: 1px dashed #008FFF;
+            padding: 8px 12px;
+            display: inline-block;
+            color: #00FFFF;
+            font-size: 14px;
+        }
+        
+        .server-content {
+            display: grid;
+            grid-template-columns: 200px 1fr 250px;
+            min-height: 450px;
+        }
+        
+        .server-info {
+            padding: 20px;
+            border-right: 1px solid #008FFF;
+        }
+        
+        .info-section {
+            margin-bottom: 25px;
+        }
+        
+        .info-section h3 {
+            color: #008FFF;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .info-section .value {
+            color: #00FFFF;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .info-section .online {
+            color: #00FF00;
+        }
+        
+        .map-section {
+            padding: 20px;
+            border-right: 1px solid #008FFF;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .map-display {
+            border: 2px solid #008FFF;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .map-image {
+            display: block;
+            max-width: 350px;
+            max-height: 350px;
+            width: auto;
+            height: auto;
+        }
+        
+        .map-name {
+            color: #008FFF;
+            text-align: center;
+            font-size: 16px;
+            letter-spacing: 1px;
+        }
+        
+        .player-section {
+            padding: 20px;
+        }
+        
+        .player-section h3 {
+            color: #008FFF;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .player-section .value {
+            color: #00FFFF;
+            font-size: 16px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #004488;
+        }
+        
+        .player-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .player-list div {
+            padding: 6px 10px;
+            color: #00FFFF;
+            border-bottom: 1px dashed #004488;
+            font-size: 13px;
+        }
+        
+        .player-list div:hover {
+            background: rgba(0, 128, 255, 0.2);
+        }
+        
+        .player-list div:last-child {
+            border-bottom: none;
+        }
+        
+        .player-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .player-list::-webkit-scrollbar-track {
+            background: #000;
+        }
+        
+        .player-list::-webkit-scrollbar-thumb {
+            background: #008FFF;
+        }
+        
+        .last-update {
+            color: #008FFF;
+            font-size: 12px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="server-container">
+        <div class="server-header">
+            <h2>Antias FFA</h2>
+            <div class="server-address" id="serverAddress">videos-shut.gl.at.ply.gg:5291</div>
+        </div>
+        
+        <div class="server-content">
+            <div class="server-info">
+                <div class="info-section">
+                    <h3>Server Status</h3>
+                    <div class="value online" id="serverStatus">Online</div>
+                </div>
+                
+                <div class="info-section">
+                    <h3>Players</h3>
+                    <div class="value" id="playerCount">13/64</div>
+                </div>
+                
+                <div class="info-section">
+                    <h3>Game Type</h3>
+                    <div class="value" id="gameType">FFA</div>
+                </div>
+            </div>
+            
+            <div class="map-section">
+                <div class="map-display">
+                    <img src="maps/pillcity.jpg" alt="Current Map" class="map-image" id="mapImage"
+                         onerror="this.src='https://via.placeholder.com/350x350/000000/008FFF?text=Map+Not+Found'">
+                </div>
+                <div class="map-name" id="mapName">pillcity</div>
+            </div>
+            
+            <div class="player-section">
+                <h3>Current Map</h3>
+                <div class="value" id="currentMapName">pillcity</div>
+                
+                <h3>Players Online</h3>
+                <div class="player-list" id="playerList">
+                    <div style="color: #666;">Loading players...</div>
+                </div>
+                
+                <div class="last-update" id="lastUpdate">Last Update: Just now</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    async function loadServerData() {
+        try {
+            const response = await fetch('server-data.json?t=' + new Date().getTime());
+            const data = await response.json();
+            
+            // Update server status
+            const statusEl = document.getElementById('serverStatus');
+            statusEl.textContent = data.status;
+            statusEl.className = 'value ' + (data.status === 'Online' ? 'online' : '');
+            
+            // Update player count
+            document.getElementById('playerCount').textContent = 
+                `${data.playerCount}/${data.maxPlayers}`;
+            
+            // Update game type
+            document.getElementById('gameType').textContent = data.gameType || 'FFA';
+            
+            // Update map
+            const mapName = data.map || 'unknown';
+            document.getElementById('mapName').textContent = mapName;
+            document.getElementById('currentMapName').textContent = mapName;
+            document.getElementById('mapImage').src = `maps/${mapName}.jpg`;
+            
+            // Update player list
+            const playerList = document.getElementById('playerList');
+            if (data.players && data.players.length > 0) {
+                playerList.innerHTML = '';
+                data.players.forEach(player => {
+                    const div = document.createElement('div');
+                    div.textContent = player;
+                    playerList.appendChild(div);
+                });
+            } else {
+                playerList.innerHTML = '<div style="color: #666;">No players online</div>';
+            }
+            
+            // Update last update time
+            if (data.lastUpdate) {
+                const updateTime = new Date(data.lastUpdate).toLocaleTimeString();
+                document.getElementById('lastUpdate').textContent = `Last Update: ${updateTime}`;
+            }
+            
+        } catch (error) {
+            console.error('Error loading server data:', error);
+        }
+    }
+    
+    // Load data when page loads
+    loadServerData();
+    
+    // Refresh every 30 seconds
+    setInterval(loadServerData, 30000);
+    </script>
+</body>
+</html>
+</html>
